@@ -35,22 +35,43 @@ RUN yum -y install icu4c libicu-devel libxml2 libxml2-devel libxslt libxslt-deve
 ADD redis.ini /etc/supervisord.d/redis.ini
 
 ##ruby
-#RUN yum -y install ruby
-#RUN yum -y groupinstall "Development Tools"
-#RUN yum -y install mysql-devel ruby-devel rubygems
+RUN yum -y install ruby
+RUN yum -y groupinstall "Development Tools"
+RUN yum -y install mysql-devel ruby-devel rubygems
 
 #rails
-#RUN gem install rails mysql2
+RUN gem install rails mysql2
+
+#user add
+RUN useradd -c 'GitLab' -s /bin/bash -m git
+RUN mkdir /home/git/.ssh/
+RUN touch /home/git/.ssh/authorized_keys
+RUN chmod 600 /home/git/.ssh/authorized_keys
+RUN chmod 700 /home/git/.ssh
+RUN chown -R git /home/git
 
 ##gitlab-shell
-#RUN git config --global user.name "GitLab"
-#RUN git config --global user.email "gitlab@localhost"
-#RUN git clone https://github.com/gitlabhq/gitlab-shell.git ~/gitlab-shell
-#RUN cd ~/gitlab-shell/
-#RUN cd ~/gitlab-shell && git checkout -b 1.9.8 v1.9.8 && cp config.yml.example config.yml
+RUN sudo -u git git config --global user.name "GitLab"
+RUN sudo -u git git config --global user.email "gitlab@localhost"
+RUN sudo -u git git clone https://github.com/gitlabhq/gitlab-shell.git /home/git/gitlab-shell
+RUN cd /home/git/gitlab-shell && sudo -u git git checkout -b 1.9.8 v1.9.8
+RUN cd /home/git/gitlab-shell && sudo -u git cp config.yml.example config.yml
+RUN cd /home/git/gitlab-shell && sudo -u ./bin/install
+
+#gitlab
+RUN sudo -u git git clone https://github.com/gitlabhq/gitlabhq.git /home/git/gitlab
+RUN cd /home/git/gitlab && sudo -u git git checkout -b 7.3.0 v7.3.0
+RUN cd /home/git/gitlab && sudo -u git cp config/gitlab.yml.example config/gitlab.yml
+
+#bundl
+RUN bundle install --deployment --without development test postgres
+
+#create databese
+RUN bundle exec rake db:create RAILS_ENV=production
+RUN bundle exec rake gitlab:setup RAILS_ENV=production
 
 #port expose
-EXPOSE 3306
+#EXPOSE 3306
 #start supervisord
 CMD ["/usr/bin/supervisord"]
 #RUN mysql_secure_installation
