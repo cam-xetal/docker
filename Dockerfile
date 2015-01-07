@@ -14,7 +14,7 @@ RUN ~/dot_files/setting.sh
 RUN yum -y install sudo 
 RUN sed -ri 's/^Defaults    requiretty/#Defaults    requiretty/' /etc/sudoers
 
-#git
+#epel
 RUN yum -y install curl wget
 RUN yum -y install epel-release
 RUN wget http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
@@ -24,18 +24,7 @@ RUN rpm -ivh remi-release-7.rpm
 RUN yum -y install supervisor
 RUN sed -ri 's/^nodaemon=false/nodaemon=true/' /etc/supervisord.conf
 
-#mariadb
-RUN yum -y install mariadb-devel mariadb mariadb-libs mariadb-server hostname
-RUN mysql_install_db
-RUN chown -R mysql:mysql /var/lib/mysql
-ADD mysqld.ini /etc/supervisord.d/mysqld.ini
-
-#Redis
-RUN yum -y install libunwind libunwind-devel gperftools-libs redis
-RUN yum -y install icu4c libicu-devel libxml2 libxml2-devel libxslt libxslt-devel cmake
-ADD redis.ini /etc/supervisord.d/redis.ini
-
-##ruby
+#ruby
 RUN yum -y install ruby
 RUN yum -y groupinstall "Development Tools"
 RUN yum -y install mysql-devel ruby-devel rubygems
@@ -69,4 +58,3 @@ RUN sudo -u git /home/git/bin/bundle exec rake gitlab:setup RAILS_ENV=production
 #port expose
 #EXPOSE 3306
 #start supervisord
-CMD ["/usr/bin/supervisord"]
